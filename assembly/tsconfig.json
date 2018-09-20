@@ -1,0 +1,6 @@
+{
+  "extends": "../../oss-ui-ngx/src/app/assemblyscript/std/assembly.json",
+  "include": [
+    "./**/*.ts"
+  ]
+}
