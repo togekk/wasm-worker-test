@@ -6,11 +6,11 @@ import wasmWorker from 'wasm-worker';
         getImportObject: () => {
             return {
                 env: {
-                    memory: new WebAssembly.Memory({ initial: 10 })
+                    memory: new WebAssembly.Memory({ initial: 10 }),
                     abort: (filename, line, column) => {
                         throw Error("abort called at " + line + ":" + column);
                     }
-                }
+                },
                 loader: instance => {
 
                     const hasBigInt64 = typeof BigUint64Array !== "undefined";
