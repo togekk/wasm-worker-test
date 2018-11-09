@@ -2,7 +2,7 @@ import 'allocator/arena';
 export { memory };
 
 export function fib_loop(): void {
-  for (let i = 0; i < 10000; i++) fib(0, 1, i);
+  for (let i = 0; i < 5000; i++) fib(0, 1, i);
 }
 
 function fib(curr: f64, next: f64, n: f64): f64 {
