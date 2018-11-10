@@ -202,17 +202,7 @@ import { resolve } from 'url';
     const t13 = performance.now();
     show_log(msg[6] + (t13 - t12) + ' ms');
     arr[5] += t13 - t12;
-    show_title('Test ' + (count + 1));
-
-    count++;
-    if (count > 10) {
-        show_title('Average');
-        for (let i = 0; i < 6; i++) show_log(msg[i] + (arr[i] / 10) + ' ms');
-    } else {
-        setTimeout(() => {
-            benchmark(count);
-        }, 100);
-    }`;
+    show_title('Test ' + (count + 1));`;
 
     setTimeout(async () => {
         benchmark(1);
