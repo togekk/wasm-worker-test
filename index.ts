@@ -16,8 +16,8 @@ import { resolve } from 'url';
                         }
                     }
 
-                    for (let i = 0; i < 20; i++)
-                        for (let j = 0; j < 5000; j++) fib(0, 1, j);
+                    for (let i = 0; i < 50; i++)
+                        for (let j = 0; j < 4000; j++) fib(0, 1, j);
                 }
             }
         }
@@ -44,7 +44,7 @@ import { resolve } from 'url';
         log.appendChild(div).appendChild(document.createTextNode(text));
     }
 
-    show_log('Loop: 5000 * 20');
+    show_log('Loop: 4000 * 50');
     show_title('Test ' + 1);
 
     const arr = new Float64Array(5);
@@ -60,8 +60,8 @@ import { resolve } from 'url';
 
     const benchmark = async count => {
         const t0 = performance.now();
-        for (let i = 0; i < 20; i++)
-            for (let j = 0; j < 5000; j++) fib(0, 1, j);
+        for (let i = 0; i < 50; i++)
+            for (let j = 0; j < 4000; j++) fib(0, 1, j);
         const t1 = performance.now();
         show_log(msg[0] + (t1 - t0) + ' ms');
         arr[0] += t1 - t0;
@@ -69,8 +69,8 @@ import { resolve } from 'url';
         const t2 = performance.now();
         const fib_promise1 = async n => wasm.exports.fib_ext(0, 1, n);
         let promises = new Array();
-        for (let i = 0; i < 20; i++)
-            for (let j = 0; j < 5000; j++) promises.push(fib_promise1(j));
+        for (let i = 0; i < 50; i++)
+            for (let j = 0; j < 4000; j++) promises.push(fib_promise1(j));
         await Promise.all(promises);
         const t3 = performance.now();
         show_log(msg[1] + (t3 - t2) + ' ms');
@@ -79,7 +79,7 @@ import { resolve } from 'url';
         const t4 = performance.now();
         const fib_promise2 = async () => wasm.exports.fib_loop();
         promises = new Array();
-        for (let i = 0; i < 20; i++) promises.push(fib_promise2());
+        for (let i = 0; i < 50; i++) promises.push(fib_promise2());
         await Promise.all(promises);
         const t5 = performance.now();
         show_log(msg[2] + (t5 - t4) + ' ms');
@@ -87,10 +87,10 @@ import { resolve } from 'url';
 
         const t6 = performance.now();
         const fib_promise3 = async () => wasm.run(({ instance }) => {
-            for (let i = 0; i < 5000; i++) instance.exports.fib_ext(0, 1, i);
+            for (let i = 0; i < 4000; i++) instance.exports.fib_ext(0, 1, i);
         });
         promises = new Array();
-        for (let i = 0; i < 20; i++) promises.push(fib_promise3());
+        for (let i = 0; i < 50; i++) promises.push(fib_promise3());
         await Promise.all(promises);
         const t7 = performance.now();
         show_log(msg[3] + (t7 - t6) + ' ms');
@@ -101,7 +101,7 @@ import { resolve } from 'url';
             instance.exports.fib_loop();
         });
         promises = new Array();
-        for (let i = 0; i < 20; i++) promises.push(fib_promise4());
+        for (let i = 0; i < 50; i++) promises.push(fib_promise4());
         await Promise.all(promises);
         const t9 = performance.now();
         show_log(msg[4] + (t9 - t8) + ' ms');
@@ -139,8 +139,8 @@ import { resolve } from 'url';
     const code = document.getElementById('code');
     code.value =
         `   const t0 = performance.now();
-    for (let i = 0; i < 20; i++)
-        for (let j = 0; j < 5000; j++) fib(0, 1, j);
+    for (let i = 0; i < 50; i++)
+        for (let j = 0; j < 4000; j++) fib(0, 1, j);
     const t1 = performance.now();
     show_log(msg[0] + (t1 - t0) + ' ms');
     arr[0] += t1 - t0;
@@ -148,8 +148,8 @@ import { resolve } from 'url';
     const t2 = performance.now();
     const fib_promise1 = async n => wasm.exports.fib_ext(0, 1, n);
     let promises = new Array();
-    for (let i = 0; i < 20; i++)
-        for (let j = 0; j < 5000; j++) promises.push(fib_promise1(j));
+    for (let i = 0; i < 50; i++)
+        for (let j = 0; j < 4000; j++) promises.push(fib_promise1(j));
     await Promise.all(promises);
     const t3 = performance.now();
     show_log(msg[1] + (t3 - t2) + ' ms');
@@ -158,7 +158,7 @@ import { resolve } from 'url';
     const t4 = performance.now();
     const fib_promise2 = async () => wasm.exports.fib_loop();
     promises = new Array();
-    for (let i = 0; i < 20; i++) promises.push(fib_promise2());
+    for (let i = 0; i < 50; i++) promises.push(fib_promise2());
     await Promise.all(promises);
     const t5 = performance.now();
     show_log(msg[2] + (t5 - t4) + ' ms');
@@ -166,10 +166,10 @@ import { resolve } from 'url';
 
     const t6 = performance.now();
     const fib_promise3 = async () => wasm.run(({ instance }) => {
-        for (let i = 0; i < 5000; i++) instance.exports.fib_ext(0, 1, i);
+        for (let i = 0; i < 4000; i++) instance.exports.fib_ext(0, 1, i);
     });
     promises = new Array();
-    for (let i = 0; i < 20; i++) promises.push(fib_promise3());
+    for (let i = 0; i < 50; i++) promises.push(fib_promise3());
     await Promise.all(promises);
     const t7 = performance.now();
     show_log(msg[3] + (t7 - t6) + ' ms');
@@ -180,7 +180,7 @@ import { resolve } from 'url';
         instance.exports.fib_loop();
     });
     promises = new Array();
-    for (let i = 0; i < 20; i++) promises.push(fib_promise4());
+    for (let i = 0; i < 50; i++) promises.push(fib_promise4());
     await Promise.all(promises);
     const t9 = performance.now();
     show_log(msg[4] + (t9 - t8) + ' ms');
