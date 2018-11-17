@@ -25,6 +25,7 @@ import { resolve } from 'url';
 
 
     const wasm = await wasmWorker('optimized.wasm', options);
+    const wasm_direct = (await WebAssembly.instantiateStreaming(await fetch('optimized.wasm'))).instance;
 
     const fib = (curr: number, next: number, n: number): number => {
         if (n == 0) {
@@ -47,88 +48,144 @@ import { resolve } from 'url';
     show_log('Loop: 4000 * 50');
     show_title('Test ' + 1);
 
-    const arr = new Float64Array(5);
-    arr.fill(0);
+
 
     const msg = ['js loop: ',
-        'wasm with js loop: ',
-        'wasm with wasm loop: ',
-        'wasm with js loop and web worker: ',
-        'wasm with wasm loop and web worker: ',
+        'wasm with js loop (direct): ',
+        'wasm with wasm loop (direct): ',
+        'js loop with wasm-worker: ',
+        'wasm with js loop and wasm-worker (direct): ',
+        'wasm with wasm loop and wasm-worker (direct): ',
+        'wasm with js loop and wasm-worker (with js function): ',
+        'wasm with wasm loop and wasm-worker (with js function): ',
+        'half wasm loop (direct) and half wasm loop (wasm-worker with js function): ',
         'pre-declared function with js loop: ',
-        'web-worker overhead: '];
+        'web-worker overhead: '
+    ];
 
-    const benchmark = async count => {
-        const t0 = performance.now();
-        for (let i = 0; i < 50; i++)
-            for (let j = 0; j < 4000; j++) fib(0, 1, j);
-        const t1 = performance.now();
-        show_log(msg[0] + (t1 - t0) + ' ms');
-        arr[0] += t1 - t0;
+    const arr = new Float64Array(msg.length);
+    arr.fill(0);
 
-        const t2 = performance.now();
-        const fib_promise1 = async n => wasm.exports.fib_ext(0, 1, n);
-        let promises = new Array();
-        for (let i = 0; i < 50; i++)
-            for (let j = 0; j < 4000; j++) promises.push(fib_promise1(j));
-        await Promise.all(promises);
-        const t3 = performance.now();
-        show_log(msg[1] + (t3 - t2) + ' ms');
-        arr[1] += t3 - t2;
+    let fib_promise, fib_promise2, promises, t0, t1;
+    const func = new Array();
 
-        const t4 = performance.now();
-        const fib_promise2 = async () => wasm.exports.fib_loop();
+    func[0] = () => {
+        return new Promise(resolve => {
+            const t2 = performance.now();
+            for (let i = 0; i < 50; i++)
+                for (let j = 0; j < 4000; j++) fib(0, 1, j);
+            const t3 = performance.now();
+            resolve();
+        })
+    }
+
+    func[1] = () => {
+        return new Promise(resolve => {
+            for (let i = 0; i < 50; i++)
+                for (let j = 0; j < 4000; j++) wasm_direct.exports.fib_ext(0, 1, j);
+            resolve();
+        })
+    }
+
+    func[2] = () => {
+        return new Promise(resolve => {
+            wasm_direct.exports.fib_loop_full();
+            resolve();
+        })
+    }
+
+    func[3] = async () => {
+        await wasm.run(() => {
+            const fib = (curr: number, next: number, n: number): number => {
+                if (n == 0) {
+                    return curr;
+                }
+                else {
+                    return fib(next, curr + next, n - 1);
+                }
+            }
+
+            for (let i = 0; i < 50; i++)
+                for (let j = 0; j < 4000; j++) fib(0, 1, j);
+        });
+    }
+
+    func[4] = async () => {
+        fib_promise = async n => wasm.exports.fib_ext(0, 1, n);
         promises = new Array();
-        for (let i = 0; i < 50; i++) promises.push(fib_promise2());
+        for (let i = 0; i < 50; i++)
+            for (let j = 0; j < 4000; j++) promises.push(fib_promise(j));
         await Promise.all(promises);
-        const t5 = performance.now();
-        show_log(msg[2] + (t5 - t4) + ' ms');
-        arr[2] += t5 - t4;
+    }
 
-        const t6 = performance.now();
-        const fib_promise3 = async () => wasm.run(({ instance }) => {
+    func[5] = async () => {
+        fib_promise = async () => wasm.exports.fib_loop();
+        promises = new Array();
+        for (let i = 0; i < 50; i++) promises.push(fib_promise());
+        await Promise.all(promises);
+    }
+
+    func[6] = async () => {
+        fib_promise = async () => wasm.run(({ instance }) => {
             for (let i = 0; i < 4000; i++) instance.exports.fib_ext(0, 1, i);
         });
         promises = new Array();
-        for (let i = 0; i < 50; i++) promises.push(fib_promise3());
+        for (let i = 0; i < 50; i++) promises.push(fib_promise());
         await Promise.all(promises);
-        const t7 = performance.now();
-        show_log(msg[3] + (t7 - t6) + ' ms');
-        arr[3] += t7 - t6;
+    }
 
-        const t8 = performance.now();
-        const fib_promise4 = async () => wasm.run(({ instance }) => {
+    func[7] = async () => {
+        fib_promise = async () => wasm.run(({ instance }) => {
             instance.exports.fib_loop();
         });
         promises = new Array();
-        for (let i = 0; i < 50; i++) promises.push(fib_promise4());
+        for (let i = 0; i < 50; i++) promises.push(fib_promise());
         await Promise.all(promises);
-        const t9 = performance.now();
-        show_log(msg[4] + (t9 - t8) + ' ms');
-        arr[4] += t9 - t8;
+    }
 
-        const t10 = performance.now();
+    func[8] = async () => {
+        fib_promise = async () => wasm.run(({ instance }) => {
+            instance.exports.fib_loop();
+        });
+        const fib_promise2 = () => {
+            return new Promise(resolve => {
+                wasm_direct.exports.fib_loop();
+                resolve();
+            })
+        };
+        promises = new Array();
+        for (let i = 0; i < 25; i++) promises.push(fib_promise());
+        for (let i = 0; i < 25; i++) promises.push(fib_promise2());
+        await Promise.all(promises);
+    }
+
+    func[9] = async () => {
         await wasm.run(({ importObject }) => {
             importObject.fib_js();
         });
-        const t11 = performance.now();
-        show_log(msg[5] + (t11 - t10) + ' ms');
-        arr[5] += t11 - t10;
+    }
 
-        const t12 = performance.now();
+    func[10] = async () => {
         await wasm.run((params) => {
             const sum = params[1] - params[0];
             return sum;
         }, [1, 2]);
-        const t13 = performance.now();
-        show_log(msg[6] + (t13 - t12) + ' ms');
-        arr[5] += t13 - t12;
-        show_title('Test ' + (count + 1));
+    }
 
+    const benchmark = async count => {
+        for (let i = 0; i < func.length; i++) {
+            t0 = performance.now();
+            await func[i]();
+            t1 = performance.now();
+            show_log(msg[i] + (t1 - t0) + ' ms');
+            arr[i] += t1 - t0;
+        }
+
+        show_title('Test ' + (count + 1));
         count++;
         if (count > 10) {
             show_title('Average');
-            for (let i = 0; i < 6; i++) show_log(msg[i] + (arr[i] / 10) + ' ms');
+            for (let i = 0; i < msg.length; i++) show_log(msg[i] + (arr[i] / 10) + ' ms');
         } else {
             setTimeout(() => {
                 benchmark(count);
@@ -138,71 +195,108 @@ import { resolve } from 'url';
 
     const code = document.getElementById('code');
     code.value =
-        `   const t0 = performance.now();
-    for (let i = 0; i < 50; i++)
-        for (let j = 0; j < 4000; j++) fib(0, 1, j);
-    const t1 = performance.now();
-    show_log(msg[0] + (t1 - t0) + ' ms');
-    arr[0] += t1 - t0;
-
-    const t2 = performance.now();
-    const fib_promise1 = async n => wasm.exports.fib_ext(0, 1, n);
-    let promises = new Array();
-    for (let i = 0; i < 50; i++)
-        for (let j = 0; j < 4000; j++) promises.push(fib_promise1(j));
-    await Promise.all(promises);
-    const t3 = performance.now();
-    show_log(msg[1] + (t3 - t2) + ' ms');
-    arr[1] += t3 - t2;
-
-    const t4 = performance.now();
-    const fib_promise2 = async () => wasm.exports.fib_loop();
-    promises = new Array();
-    for (let i = 0; i < 50; i++) promises.push(fib_promise2());
-    await Promise.all(promises);
-    const t5 = performance.now();
-    show_log(msg[2] + (t5 - t4) + ' ms');
-    arr[2] += t5 - t4;
-
-    const t6 = performance.now();
-    const fib_promise3 = async () => wasm.run(({ instance }) => {
-        for (let i = 0; i < 4000; i++) instance.exports.fib_ext(0, 1, i);
-    });
-    promises = new Array();
-    for (let i = 0; i < 50; i++) promises.push(fib_promise3());
-    await Promise.all(promises);
-    const t7 = performance.now();
-    show_log(msg[3] + (t7 - t6) + ' ms');
-    arr[3] += t7 - t6;
-
-    const t8 = performance.now();
-    const fib_promise4 = async () => wasm.run(({ instance }) => {
-        instance.exports.fib_loop();
-    });
-    promises = new Array();
-    for (let i = 0; i < 50; i++) promises.push(fib_promise4());
-    await Promise.all(promises);
-    const t9 = performance.now();
-    show_log(msg[4] + (t9 - t8) + ' ms');
-    arr[4] += t9 - t8;
-
-    const t10 = performance.now();
-    await wasm.run(({ importObject }) => {
-        importObject.fib_js();
-    });
-    const t11 = performance.now();
-    show_log(msg[5] + (t11 - t10) + ' ms');
-    arr[5] += t11 - t10;
-
-    const t12 = performance.now();
-    await wasm.run((params) => {
-        const sum = params[1] - params[0];
-        return sum;
-    }, [1, 2]);
-    const t13 = performance.now();
-    show_log(msg[6] + (t13 - t12) + ' ms');
-    arr[5] += t13 - t12;
-    show_title('Test ' + (count + 1));`;
+        `       func[0] = () => {
+            return new Promise(resolve => {
+                const t2 = performance.now();
+                for (let i = 0; i < 50; i++)
+                    for (let j = 0; j < 4000; j++) fib(0, 1, j);
+                const t3 = performance.now();
+                resolve();
+            })
+        }
+    
+        func[1] = () => {
+            return new Promise(resolve => {
+                for (let i = 0; i < 50; i++)
+                    for (let j = 0; j < 4000; j++) wasm_direct.exports.fib_ext(0, 1, j);
+                resolve();
+            })
+        }
+    
+        func[2] = () => {
+            return new Promise(resolve => {
+                wasm_direct.exports.fib_loop_full();
+                resolve();
+            })
+        }
+    
+        func[3] = async () => {
+            await wasm.run(() => {
+                const fib = (curr: number, next: number, n: number): number => {
+                    if (n == 0) {
+                        return curr;
+                    }
+                    else {
+                        return fib(next, curr + next, n - 1);
+                    }
+                }
+    
+                for (let i = 0; i < 50; i++)
+                    for (let j = 0; j < 4000; j++) fib(0, 1, j);
+            });
+        }
+    
+        func[4] = async () => {
+            fib_promise = async n => wasm.exports.fib_ext(0, 1, n);
+            promises = new Array();
+            for (let i = 0; i < 50; i++)
+                for (let j = 0; j < 4000; j++) promises.push(fib_promise(j));
+            await Promise.all(promises);
+        }
+    
+        func[5] = async () => {
+            fib_promise = async () => wasm.exports.fib_loop();
+            promises = new Array();
+            for (let i = 0; i < 50; i++) promises.push(fib_promise());
+            await Promise.all(promises);
+        }
+    
+        func[6] = async () => {
+            fib_promise = async () => wasm.run(({ instance }) => {
+                for (let i = 0; i < 4000; i++) instance.exports.fib_ext(0, 1, i);
+            });
+            promises = new Array();
+            for (let i = 0; i < 50; i++) promises.push(fib_promise());
+            await Promise.all(promises);
+        }
+    
+        func[7] = async () => {
+            fib_promise = async () => wasm.run(({ instance }) => {
+                instance.exports.fib_loop();
+            });
+            promises = new Array();
+            for (let i = 0; i < 50; i++) promises.push(fib_promise());
+            await Promise.all(promises);
+        }
+    
+        func[8] = async () => {
+            fib_promise = async () => wasm.run(({ instance }) => {
+                instance.exports.fib_loop();
+            });
+            const fib_promise2 = () => {
+                return new Promise(resolve => {
+                    wasm_direct.exports.fib_loop();
+                    resolve();
+                })
+            };
+            promises = new Array();
+            for (let i = 0; i < 25; i++) promises.push(fib_promise());
+            for (let i = 0; i < 25; i++) promises.push(fib_promise2());
+            await Promise.all(promises);
+        }
+    
+        func[9] = async () => {
+            await wasm.run(({ importObject }) => {
+                importObject.fib_js();
+            });
+        }
+    
+        func[10] = async () => {
+            await wasm.run((params) => {
+                const sum = params[1] - params[0];
+                return sum;
+            }, [1, 2]);
+        }`;
 
     setTimeout(async () => {
         benchmark(1);
