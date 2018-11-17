@@ -23,8 +23,16 @@ import { resolve } from 'url';
         }
     };
 
-
     const wasm = await wasmWorker('optimized.wasm', options);
+    const worker0 = await wasmWorker('optimized.wasm');
+    const worker1 = await wasmWorker('optimized.wasm');
+    const worker2 = await wasmWorker('optimized.wasm');
+    const worker3 = await wasmWorker('optimized.wasm');
+    const worker4 = await wasmWorker('optimized.wasm');
+    const worker5 = await wasmWorker('optimized.wasm');
+    const worker6 = await wasmWorker('optimized.wasm');
+    const worker7 = await wasmWorker('optimized.wasm');
+    const worker8 = await wasmWorker('optimized.wasm');
     const wasm_direct = (await WebAssembly.instantiateStreaming(await fetch('optimized.wasm'))).instance;
 
     const fib = (curr: number, next: number, n: number): number => {
@@ -147,15 +155,44 @@ import { resolve } from 'url';
         fib_promise = async () => wasm.run(({ instance }) => {
             instance.exports.fib_loop();
         });
-        const fib_promise2 = () => {
-            return new Promise(resolve => {
-                wasm_direct.exports.fib_loop();
-                resolve();
-            })
-        };
+        const fib_promise1 = async () => worker0.run(({ instance }) => {
+            instance.exports.fib_loop();
+        });
+        const fib_promise2 = async () => worker1.run(({ instance }) => {
+            instance.exports.fib_loop();
+        });
+        const fib_promise3 = async () => worker2.run(({ instance }) => {
+            instance.exports.fib_loop();
+        });
+        const fib_promise4 = async () => worker3.run(({ instance }) => {
+            instance.exports.fib_loop();
+        });
+        const fib_promise5 = async () => worker4.run(({ instance }) => {
+            instance.exports.fib_loop();
+        });
+        const fib_promise6 = async () => worker5.run(({ instance }) => {
+            instance.exports.fib_loop();
+        });
+        const fib_promise7 = async () => worker6.run(({ instance }) => {
+            instance.exports.fib_loop();
+        });
+        const fib_promise8 = async () => worker7.run(({ instance }) => {
+            instance.exports.fib_loop();
+        });
+        const fib_promise9 = async () => worker8.run(({ instance }) => {
+            instance.exports.fib_loop();
+        });
         promises = new Array();
-        for (let i = 0; i < 25; i++) promises.push(fib_promise());
-        for (let i = 0; i < 25; i++) promises.push(fib_promise2());
+        for (let i = 0; i < 5; i++) promises.push(fib_promise());
+        for (let i = 0; i < 5; i++) promises.push(fib_promise1());
+        for (let i = 0; i < 5; i++) promises.push(fib_promise2());
+        for (let i = 0; i < 5; i++) promises.push(fib_promise3());
+        for (let i = 0; i < 5; i++) promises.push(fib_promise4());
+        for (let i = 0; i < 5; i++) promises.push(fib_promise5());
+        for (let i = 0; i < 5; i++) promises.push(fib_promise6());
+        for (let i = 0; i < 5; i++) promises.push(fib_promise7());
+        for (let i = 0; i < 5; i++) promises.push(fib_promise8());
+        for (let i = 0; i < 5; i++) promises.push(fib_promise9());
         await Promise.all(promises);
     }
 
@@ -273,15 +310,44 @@ import { resolve } from 'url';
             fib_promise = async () => wasm.run(({ instance }) => {
                 instance.exports.fib_loop();
             });
-            const fib_promise2 = () => {
-                return new Promise(resolve => {
-                    wasm_direct.exports.fib_loop();
-                    resolve();
-                })
-            };
+            const fib_promise1 = async () => worker0.run(({ instance }) => {
+                instance.exports.fib_loop();
+            });
+            const fib_promise2 = async () => worker1.run(({ instance }) => {
+                instance.exports.fib_loop();
+            });
+            const fib_promise3 = async () => worker2.run(({ instance }) => {
+                instance.exports.fib_loop();
+            });
+            const fib_promise4 = async () => worker3.run(({ instance }) => {
+                instance.exports.fib_loop();
+            });
+            const fib_promise5 = async () => worker4.run(({ instance }) => {
+                instance.exports.fib_loop();
+            });
+            const fib_promise6 = async () => worker5.run(({ instance }) => {
+                instance.exports.fib_loop();
+            });
+            const fib_promise7 = async () => worker6.run(({ instance }) => {
+                instance.exports.fib_loop();
+            });
+            const fib_promise8 = async () => worker7.run(({ instance }) => {
+                instance.exports.fib_loop();
+            });
+            const fib_promise9 = async () => worker8.run(({ instance }) => {
+                instance.exports.fib_loop();
+            });
             promises = new Array();
-            for (let i = 0; i < 25; i++) promises.push(fib_promise());
-            for (let i = 0; i < 25; i++) promises.push(fib_promise2());
+            for (let i = 0; i < 5; i++) promises.push(fib_promise());
+            for (let i = 0; i < 5; i++) promises.push(fib_promise1());
+            for (let i = 0; i < 5; i++) promises.push(fib_promise2());
+            for (let i = 0; i < 5; i++) promises.push(fib_promise3());
+            for (let i = 0; i < 5; i++) promises.push(fib_promise4());
+            for (let i = 0; i < 5; i++) promises.push(fib_promise5());
+            for (let i = 0; i < 5; i++) promises.push(fib_promise6());
+            for (let i = 0; i < 5; i++) promises.push(fib_promise7());
+            for (let i = 0; i < 5; i++) promises.push(fib_promise8());
+            for (let i = 0; i < 5; i++) promises.push(fib_promise9());
             await Promise.all(promises);
         }
     
